@@ -1,0 +1,16 @@
+version: "2.3"
+services:
+  process:
+    image: esrgan
+    runtime: nvidia
+    volumes:
+      - './esrgan/:/app/esrgan'
+    working_dir: /app/esrgan
+    entrypoint: python3 process.py
+  net_interp:
+    image: local/esrgan
+    runtime: nvidia
+    volumes:
+      - './esrgan/:/app/esrgan'
+    working_dir: /app/esrgan
+    entrypoint: python3 net_interp.py
