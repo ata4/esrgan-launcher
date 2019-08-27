@@ -76,7 +76,7 @@ class TiledUpscaler(object):
 
                 tile_idx = y * tiles_x + x + 1
 
-                print('  Tile %d/%d (x=%d y=%d %dx%d)' % (tile_idx, tiles_x * tiles_y, x, y, input_tile_width, input_tile_height), flush=True)
+                print('  Tile %d/%d (x=%d y=%d %dx%d)' % (tile_idx, tiles_x * tiles_y, x, y, input_tile_width, input_tile_height))
 
                 input_tile = input[input_start_x:input_end_x, input_start_y:input_end_y]
 
@@ -155,28 +155,28 @@ def main():
     parser.add_argument('model', help='Path to model file')
 
     parser.add_argument('--tilesize', type=int, metavar='N', default=256, help='size of tiles in pixels (0 = don\'t use tiles)')
-    parser.add_argument('--cpu', action='store_true', help='use CPU instead of GPU/CUDA (very slow!)')
+    parser.add_argument('--gpu', action='store_true', help='use GPU/CUDA for faster processing')
     parser.add_argument('--scale', type=int, metavar='S', default=4, help='scale factor of the output images')
 
     args = parser.parse_args()
 
-    if args.cpu:
-        device = torch.device('cpu')
-    else:
+    if args.gpu:
         device = torch.device('cuda')
+    else:
+        device = torch.device('cpu')
 
     for current_model_path in glob.glob(args.model):
         if os.path.isdir(current_model_path):
             continue
             
         model_name = os.path.splitext(os.path.basename(current_model_path))[0]
-        print("Initializing ESRGAN using model '%s'" % model_name, flush=True)
+        print("Initializing ESRGAN using model '%s'" % model_name)
 
         output_dir = os.path.join(args.output, model_name)
         os.makedirs(output_dir, exist_ok=True)
 
         upscaler = ESRGANUpscaler(current_model_path, device, scale_factor=args.scale)
-        upscaler = TiledUpscaler(upscaler, 512)
+        #upscaler = TiledUpscaler(upscaler, 512)
         esrgan = ESRGAN(upscaler)
 
         if os.path.isdir(args.input):
@@ -184,7 +184,7 @@ def main():
                 for filename in filenames:
                     input_path = os.path.join(dirpath, filename)
                     input_name = os.path.basename(input_path)
-                    print('Processing', input_name, flush=True)
+                    print('Processing', input_name)
 
                     input_path_rel = os.path.relpath(input_path, args.input)
                     output_path_rel = os.path.splitext(input_path_rel)[0] + '.png'
@@ -198,7 +198,7 @@ def main():
                     continue
 
                 input_name = os.path.basename(input_path)
-                print('Processing', input_name, flush=True)
+                print('Processing', input_name)
 
                 output_name = os.path.splitext(input_name)[0] + '.png'
                 output_path = os.path.join(output_dir, output_name)
