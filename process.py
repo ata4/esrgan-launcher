@@ -76,7 +76,7 @@ class TiledUpscaler(object):
 
                 tile_idx = y * tiles_x + x + 1
 
-                print('  Tile %d/%d (x=%d y=%d %dx%d)' % (tile_idx, tiles_x * tiles_y, x, y, input_tile_width, input_tile_height))
+                print("  Tile %d/%d (x=%d y=%d %dx%d)" % (tile_idx, tiles_x * tiles_y, x, y, input_tile_width, input_tile_height))
 
                 input_tile = input[input_start_x:input_end_x, input_start_y:input_end_y]
 
@@ -148,22 +148,22 @@ class ESRGAN:
         cv2.imwrite(output_path, output)
 
 def main():
-    parser = argparse.ArgumentParser(description='ESRGAN image upscaler with tiling support')
+    parser = argparse.ArgumentParser(description="ESRGAN image upscaler with tiling support")
 
-    parser.add_argument('input', help='Path to input folder')
-    parser.add_argument('output', help='Path to output folder')
-    parser.add_argument('model', help='Path to model file')
+    parser.add_argument("input", help="Path to input folder")
+    parser.add_argument("output", help="Path to output folder")
+    parser.add_argument("model", help="Path to model file")
 
-    parser.add_argument('--tilesize', type=int, metavar='N', default=256, help='size of tiles in pixels (0 = don\'t use tiles)')
-    parser.add_argument('--gpu', action='store_true', help='use GPU/CUDA for faster processing')
-    parser.add_argument('--scale', type=int, metavar='S', default=4, help='scale factor of the output images')
+    parser.add_argument("--tilesize", type=int, metavar="N", default=256, help="size of tiles in pixels (0 = don\"t use tiles)")
+    parser.add_argument("--gpu", action="store_true", help="use GPU/CUDA for faster processing")
+    parser.add_argument("--scale", type=int, metavar="S", default=4, help="scale factor of the output images")
 
     args = parser.parse_args()
 
     if args.gpu:
-        device = torch.device('cuda')
+        device = torch.device("cuda")
     else:
-        device = torch.device('cpu')
+        device = torch.device("cpu")
 
     for current_model_path in glob.glob(args.model):
         if os.path.isdir(current_model_path):
@@ -184,10 +184,10 @@ def main():
                 for filename in filenames:
                     input_path = os.path.join(dirpath, filename)
                     input_name = os.path.basename(input_path)
-                    print('Processing', input_name)
+                    print("Processing", input_name)
 
                     input_path_rel = os.path.relpath(input_path, args.input)
-                    output_path_rel = os.path.splitext(input_path_rel)[0] + '.png'
+                    output_path_rel = os.path.splitext(input_path_rel)[0] + ".png"
                     output_path = os.path.join(output_dir, output_path_rel)
                     os.makedirs(os.path.dirname(output_path), exist_ok=True)
                     esrgan.process(input_path, output_path)
@@ -198,11 +198,11 @@ def main():
                     continue
 
                 input_name = os.path.basename(input_path)
-                print('Processing', input_name)
+                print("Processing", input_name)
 
-                output_name = os.path.splitext(input_name)[0] + '.png'
+                output_name = os.path.splitext(input_name)[0] + ".png"
                 output_path = os.path.join(output_dir, output_name)
                 esrgan.process(input_path, output_path)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     exit(main())
