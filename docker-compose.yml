@@ -1,16 +1,15 @@
 version: "2.3"
 services:
-  process:
+  process: &default
     image: esrgan
-    runtime: nvidia
     volumes:
-      - './esrgan/:/app/esrgan'
+      - '.:/app/esrgan'
     working_dir: /app/esrgan
-    entrypoint: python3 process.py
+    entrypoint: python3 -u process.py
+  process-gpu:
+    <<: *default
+    runtime: nvidia
+    entrypoint: python3 -u process.py --gpu
   net_interp:
-    image: local/esrgan
-    runtime: nvidia
-    volumes:
-      - './esrgan/:/app/esrgan'
-    working_dir: /app/esrgan
-    entrypoint: python3 net_interp.py
+    <<: *default
+    entrypoint: python3 -u net_interp.py
