@@ -9,8 +9,6 @@ class RRDB_Net(nn.Module):
             mode='CNA', upsample_mode='upconv'):
         super(RRDB_Net, self).__init__()
         n_upscale = int(math.log(upscale, 2))
-        if upscale == 3:
-            n_upscale = 1
 
         fea_conv = B.conv_block(in_nc, nf, kernel_size=3, norm_type=None, act_type=None)
         rb_blocks = [B.RRDB(nf, kernel_size=3, gc=32, stride=1, bias=True, pad_type='zero', \
