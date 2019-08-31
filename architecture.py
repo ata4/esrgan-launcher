@@ -16,7 +16,7 @@ class RRDB_Net(nn.Module):
         LR_conv = B.conv_block(nf, nf, kernel_size=3, norm_type=norm_type, act_type=None, mode=mode)
 
         if upsample_mode == 'upconv':
-            upsample_block = B.upconv_blcok
+            upsample_block = B.upconv_block
         elif upsample_mode == 'pixelshuffle':
             upsample_block = B.pixelshuffle_block
         else:
