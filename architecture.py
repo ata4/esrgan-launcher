@@ -6,7 +6,7 @@ import block as B
 
 class RRDB_Net(nn.Module):
     def __init__(self, in_nc, out_nc, nf, nb, gc=32, upscale=4, norm_type=None, act_type='leakyrelu', \
-            mode='CNA', res_scale=1, upsample_mode='upconv'):
+            mode='CNA', upsample_mode='upconv'):
         super(RRDB_Net, self).__init__()
         n_upscale = int(math.log(upscale, 2))
         if upscale == 3:
