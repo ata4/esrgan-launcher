@@ -234,6 +234,16 @@ class RRDB(nn.Module):
 # Upsampler
 ####################
 
+class Interpolate(nn.Module):
+    def __init__(self, scale_factor, mode):
+        super().__init__()
+        self.interp = nn.functional.interpolate
+        self.scale_factor = scale_factor
+        self.mode = mode
+
+    def forward(self, x):
+        x = self.interp(x, scale_factor=self.scale_factor, mode=self.mode)
+        return x
 
 def pixelshuffle_block(in_nc, out_nc, upscale_factor=2, kernel_size=3, stride=1, bias=True,
                         pad_type='zero', norm_type=None, act_type='relu'):
@@ -255,7 +265,7 @@ def upconv_block(in_nc, out_nc, upscale_factor=2, kernel_size=3, stride=1, bias=
                 pad_type='zero', norm_type=None, act_type='relu', mode='nearest'):
     # Up conv
     # described in https://distill.pub/2016/deconv-checkerboard/
-    upsample = nn.Upsample(scale_factor=upscale_factor, mode=mode)
+    upsample = Interpolate(scale_factor=upscale_factor, mode=mode)
     conv = conv_block(in_nc, out_nc, kernel_size, stride, bias=bias,
                         pad_type=pad_type, norm_type=norm_type, act_type=act_type)
     return sequential(upsample, conv)
