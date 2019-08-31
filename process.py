@@ -50,21 +50,23 @@ class Upscaler(object):
         return output_image
 
 class TiledUpscaler(object):
-    def __init__(self, upscaler, tile_size):
+    def __init__(self, upscaler, tile_size, tile_padding):
         self.upscaler = upscaler
-        self.scale_factor = upscaler.scale_factor
         self.tile_size = tile_size
+        self.tile_padding = tile_padding
 
     def upscale(self, input_image):
+        scale_factor = self.upscaler.scale_factor
         width, height, depth = input_image.shape
-        output_width = width * self.scale_factor
-        output_height = height * self.scale_factor
+        output_width = width * scale_factor
+        output_height = height * scale_factor
         output_shape = (output_width, output_height, depth)
 
         # start with black image
         output_image = np.zeros(output_shape, np.uint8)
 
-        tile_size = math.ceil(self.tile_size / self.scale_factor)
+        tile_padding = math.ceil(self.tile_size * self.tile_padding)
+        tile_size = math.ceil(self.tile_size / scale_factor)
 
         tiles_x = math.ceil(width / tile_size)
         tiles_y = math.ceil(height / tile_size)
@@ -75,32 +77,51 @@ class TiledUpscaler(object):
                 ofs_x = x * tile_size
                 ofs_y = y * tile_size
 
+                # input tile area on total image
                 input_start_x = ofs_x
                 input_end_x = min(ofs_x + tile_size, width)
 
                 input_start_y = ofs_y
                 input_end_y = min(ofs_y + tile_size, height)
 
+                # input tile area on total image with padding
+                input_start_x_pad = max(input_start_x - tile_padding, 0)
+                input_end_x_pad = min(input_end_x + tile_padding, width)
+
+                input_start_y_pad = max(input_start_y - tile_padding, 0)
+                input_end_y_pad = min(input_end_y + tile_padding, height)
+
+                # input tile dimensions
                 input_tile_width = input_end_x - input_start_x
                 input_tile_height = input_end_y - input_start_y
 
                 tile_idx = y * tiles_x + x + 1
 
-                print("  Tile %d/%d (x=%d y=%d %dx%d)" % (tile_idx, tiles_x * tiles_y, x, y, input_tile_width, input_tile_height))
+                print("  Tile %d/%d (x=%d y=%d %dx%d)" % \
+                    (tile_idx, tiles_x * tiles_y, x, y, input_tile_width, input_tile_height))
 
-                input_tile = input_image[input_start_x:input_end_x, input_start_y:input_end_y]
+                input_tile = input_image[input_start_x_pad:input_end_x_pad, input_start_y_pad:input_end_y_pad]
 
                 # upscale tile
                 output_tile = self.upscaler.upscale(input_tile)
 
+                # output tile area on total image
+                output_start_x = input_start_x * scale_factor
+                output_end_x = input_end_x * scale_factor
+
+                output_start_y = input_start_y * scale_factor
+                output_end_y = input_end_y * scale_factor
+
+                # output tile area without padding
+                output_start_x_tile = (input_start_x - input_start_x_pad) * scale_factor
+                output_end_x_tile = output_start_x_tile + input_tile_width * scale_factor
+
+                output_start_y_tile = (input_start_y - input_start_y_pad) * scale_factor
+                output_end_y_tile = output_start_y_tile + input_tile_height * scale_factor
+
                 # put tile into output image
-                output_start_x = input_start_x * self.scale_factor
-                output_end_x = input_end_x * self.scale_factor
-
-                output_start_y = input_start_y * self.scale_factor
-                output_end_y = input_end_y * self.scale_factor
-
-                output_image[output_start_x:output_end_x, output_start_y:output_end_y] = output_tile
+                output_image[output_start_x:output_end_x, output_start_y:output_end_y] = \
+                    output_tile[output_start_x_tile:output_end_x_tile, output_start_y_tile:output_end_y_tile]
 
         return output_image
 
@@ -154,14 +175,15 @@ class ESRGAN(object):
         self.per_channel = False
         self.device = "cpu"
         self.torch = None
-        self.tilesize = 512
+        self.tile_size = 512
+        self.tile_padding = 0.125
 
         self.models_upscale = []
         self.models_filter = []
 
     def _process_image(self, input_image, upscaler):
-        if self.tilesize > 0:
-            upscaler = TiledUpscaler(upscaler, self.tilesize)
+        if self.tile_size > 0:
+            upscaler = TiledUpscaler(upscaler, self.tile_size, self.tile_padding)
 
         if len(input_image.shape) == 2:
             # only one channel
@@ -271,14 +293,14 @@ class ESRGAN(object):
 
         parser.add_argument("--model", action="append", help="path to upscaling model file (can be used repeatedly)")
         parser.add_argument("--filter", action="append", help="path to 1x filter model file (can be used repeatedly)")
-        parser.add_argument("--tilesize", type=int, metavar="N", default=self.tilesize, help="width/height of tiles in pixels (0 = don't use tiles)")
+        parser.add_argument("--tilesize", type=int, metavar="N", default=self.tile_size, help="width/height of tiles in pixels (0 = don't use tiles)")
         parser.add_argument("--device", default=self.device, help="use this Torch device (typically 'cpu' or 'cuda')")
 
         args = parser.parse_args()
 
         self.device = args.device
         self.torch = torch.device(self.device)
-        self.tilesize = args.tilesize
+        self.tile_size = args.tilesize
 
         self.models_upscale = self._parse_model(args.model)
         self.models_filter = self._parse_model(args.filter)
