@@ -171,11 +171,11 @@ class WeightedFileListModel(FileModel):
 
 class ESRGAN(object):
     def __init__(self):
-        self.per_channel = False
         self.device = "cpu"
         self.torch = None
         self.tile_size = 512
         self.tile_padding = 0.125
+        self.per_channel = False
 
         self.models_upscale = []
         self.models_filter = []
@@ -301,15 +301,17 @@ class ESRGAN(object):
         parser.add_argument("output", help="Path to output folder")
 
         parser.add_argument("--model", action="append", help="path to upscaling model file (can be used repeatedly)")
+        parser.add_argument("--device", default=self.device, help="use this Torch device (typically 'cpu' or 'cuda')")
         parser.add_argument("--filter", action="append", help="path to 1x filter model file (can be used repeatedly)")
         parser.add_argument("--tilesize", type=int, metavar="N", default=self.tile_size, help="width/height of tiles in pixels (0 = don't use tiles)")
-        parser.add_argument("--device", default=self.device, help="use this Torch device (typically 'cpu' or 'cuda')")
+        parser.add_argument("--perchannel", action="store_true", help="process each channel individually as grayscale image")
 
         args = parser.parse_args()
 
         self.device = args.device
         self.torch = torch.device(self.device)
         self.tile_size = args.tilesize
+        self.per_channel = args.perchannel
 
         self.models_upscale = self._parse_model(args.model)
         self.models_filter = self._parse_model(args.filter)
