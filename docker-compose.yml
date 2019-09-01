@@ -1,15 +1,15 @@
 version: "2.3"
 services:
-  process-cpu: &default
+  main-cpu: &default
     image: esrgan
     volumes:
       - '.:/app/esrgan'
     working_dir: /app/esrgan
-    entrypoint: python3 -u process.py
-  process:
+    entrypoint: python3 -u main.py
+  main:
     <<: *default
     runtime: nvidia
-    entrypoint: python3 -u process.py --device cuda
+    entrypoint: python3 -u main.py --device cuda
   tmp:
     <<: *default
     entrypoint: python3 -u net_interp.py
