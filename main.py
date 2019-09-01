@@ -8,8 +8,7 @@ import collections
 import cv2
 import numpy as np
 import torch
-
-import architecture as arch
+import rrdbnet
 
 class Upscaler(object):
     def __init__(self, model_data, device):
@@ -26,7 +25,7 @@ class Upscaler(object):
             # ... or maybe not
             raise RuntimeError("Unable to determine scale factor for model")
 
-        model = arch.RRDB_Net(3, 3, 64, 23, upscale=scale_factor)
+        model = rrdbnet.RRDB_Net(3, 3, 64, 23, upscale=scale_factor)
         model.load_state_dict(model_data, strict=True)
         model.eval()
 
