@@ -300,7 +300,7 @@ class ESRGAN(object):
         parser.add_argument("input", help="Path to input folder")
         parser.add_argument("output", help="Path to output folder")
 
-        parser.add_argument("--model", action="append", help="path to upscaling model file (can be used repeatedly)")
+        parser.add_argument("--model", action="append", required=True, help="path to upscaling model file (can be used repeatedly)")
         parser.add_argument("--device", default=self.device, help="use this Torch device (typically 'cpu' or 'cuda')")
         parser.add_argument("--filter", action="append", help="path to 1x filter model file (can be used repeatedly)")
         parser.add_argument("--tilesize", type=int, metavar="N", default=self.tile_size, help="width/height of tiles in pixels (0 = don't use tiles)")
@@ -315,11 +315,6 @@ class ESRGAN(object):
 
         self.models_upscale = self._parse_model(args.model)
         self.models_filter = self._parse_model(args.filter)
-
-        # this script is pretty pointless without models
-        if not self.models_upscale:
-            print("No model selected, use '--model' to choose at least one model")
-            return 1
 
         for model_upscale in self.models_upscale:
             models = list(self.models_filter)
