@@ -231,20 +231,22 @@ class ESRGAN(object):
         input_name = os.path.basename(input_path)
         print("Processing", input_name)
 
-        # read image
+        # read input
         input_image = cv2.imread(input_path, cv2.IMREAD_UNCHANGED)
         if input_image is None:
             print("Unsupported image format:", input_path)
             return
 
+        # start with an unmodified image
         output_image = input_image
 
+        # apply all models from the list
         for model in models:
             print("Applying model '%s'" % model.name())
             upscaler = Upscaler(model.get(), self.torch)
             output_image = self._process_image(output_image, upscaler)
 
-        # write image
+        # write output
         cv2.imwrite(output_path, output_image)
 
     def _parse_model(self, model_args):
@@ -261,22 +263,30 @@ class ESRGAN(object):
                 model_paths = {}
                 model_parts = model_path.split(os.path.pathsep)
 
+                # it's a list of pairs, so the number of elements must be even
                 if len(model_parts) % 2 != 0:
                     raise RuntimeError("Model list must be in format [model path]%c[weight]%c..." % (os.path.pathsep, os.path.pathsep))
 
                 for model_part in model_parts:
                     if path is None:
+                        # start with the model path first
                         path = model_part
                     else:
+                        # then parse the model weight
                         try:
                             weight = int(model_part)
                         except ValueError:
                             raise RuntimeError("Invalid number for model weight:", model_part)
+
+                        # and put it into the map
                         model_paths[path] = weight
+
+                        # continue with next pair
                         path = None
 
                 models.append(WeightedFileListModel(model_paths))
             else:
+                # simple path, may use wildcards
                 for current_model_path in glob.glob(model_path):
                     if os.path.isdir(current_model_path):
                         continue
@@ -305,6 +315,7 @@ class ESRGAN(object):
         self.models_upscale = self._parse_model(args.model)
         self.models_filter = self._parse_model(args.filter)
 
+        # this script is pretty pointless without models
         if not self.models_upscale:
             print("No model selected, use '--model' to choose at least one model")
             return 1
