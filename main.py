@@ -178,7 +178,8 @@ class ESRGAN(object):
         self.per_channel = False
 
         self.models_upscale = []
-        self.models_filter = []
+        self.models_prefilter = []
+        self.models_postfilter = []
 
     def _process_image(self, input_image, upscaler):
         if self.tile_size > 0:
@@ -301,8 +302,9 @@ class ESRGAN(object):
         parser.add_argument("output", help="Path to output folder")
 
         parser.add_argument("--model", action="append", required=True, help="path to upscaling model file (can be used repeatedly)")
-        parser.add_argument("--device", default=self.device, help="use this Torch device (typically 'cpu' or 'cuda')")
-        parser.add_argument("--filter", action="append", help="path to 1x filter model file (can be used repeatedly)")
+        parser.add_argument("--device", default=self.device, help="select Torch device (typically 'cpu' or 'cuda')")
+        parser.add_argument("--prefilter", action="append", metavar="FILE", help="path to model file applied before upscaling (can be used repeatedly)")
+        parser.add_argument("--postfilter", action="append", metavar="FILE", help="path to model file applied after upscaling (can be used repeatedly)")
         parser.add_argument("--tilesize", type=int, metavar="N", default=self.tile_size, help="width/height of tiles in pixels (0 = don't use tiles)")
         parser.add_argument("--perchannel", action="store_true", help="process each channel individually as grayscale image")
 
@@ -314,12 +316,11 @@ class ESRGAN(object):
         self.per_channel = args.perchannel
 
         self.models_upscale = self._parse_model(args.model)
-        self.models_filter = self._parse_model(args.filter)
+        self.models_prefilter = self._parse_model(args.prefilter)
+        self.models_postfilter = self._parse_model(args.postfilter)
 
         for model_upscale in self.models_upscale:
-            models = list(self.models_filter)
-            models.append(model_upscale)
-
+            models = self.models_prefilter + [model_upscale] + self.models_postfilter
             model_name = "_".join([model.name() for model in models])
 
             print("Model pass '%s'" % model_name)
