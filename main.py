@@ -12,18 +12,16 @@ import rrdbnet
 
 class Upscaler(object):
     def __init__(self, model_data, device):
-        # crude method to detect the scale factor for a model, but
-        # it seems to work
-        scale_factor = None
-        for i in range(6):
-            attr_key = "model.%d.weight" % (4 + 3 * i)
-            if attr_key in model_data:
-                scale_factor = 2 ** i
-                break
-
-        if scale_factor is None:
-            # ... or maybe not
+        try:
+            # get largest model index from keys like "model.X.weight"
+            max_index = max([int(n.split(".")[1]) for n in model_data.keys()])
+        except:
+            # invalid model dict format?
             raise RuntimeError("Unable to determine scale factor for model")
+
+        # calculate scale factor from index
+        # (1x=4, 2x=7, 4x=10, 8x=13, etc.)
+        scale_factor = pow(2, (max_index - 4) // 3)
 
         model = rrdbnet.RRDB_Net(3, 3, 64, 23, upscale=scale_factor)
         model.load_state_dict(model_data, strict=True)
