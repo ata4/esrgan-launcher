@@ -57,24 +57,6 @@ def get_valid_padding(kernel_size, dilation):
     padding = (kernel_size - 1) // 2
     return padding
 
-
-class ConcatBlock(nn.Module):
-    # Concat the output of a submodule to its input
-    def __init__(self, submodule):
-        super(ConcatBlock, self).__init__()
-        self.sub = submodule
-
-    def forward(self, x):
-        output = torch.cat((x, self.sub(x)), dim=1)
-        return output
-
-    def __repr__(self):
-        tmpstr = 'Identity .. \n|'
-        modstr = self.sub.__repr__().replace('\n', '\n|')
-        tmpstr = tmpstr + modstr
-        return tmpstr
-
-
 class ShortcutBlock(nn.Module):
     #Elementwise sum the output of a submodule to its input
     def __init__(self, submodule):
@@ -140,40 +122,6 @@ def conv_block(in_nc, out_nc, kernel_size, stride=1, dilation=1, groups=1, bias=
 ####################
 # Useful blocks
 ####################
-
-
-class ResNetBlock(nn.Module):
-    """
-    ResNet Block, 3-3 style
-    with extra residual scaling used in EDSR
-    (Enhanced Deep Residual Networks for Single Image Super-Resolution, CVPRW 17)
-    """
-
-    def __init__(self, in_nc, mid_nc, out_nc, kernel_size=3, stride=1, dilation=1, groups=1, \
-            bias=True, pad_type='zero', norm_type=None, act_type='relu', mode='CNA', res_scale=1):
-        super(ResNetBlock, self).__init__()
-        conv0 = conv_block(in_nc, mid_nc, kernel_size, stride, dilation, groups, bias, pad_type, \
-            norm_type, act_type, mode)
-        if mode == 'CNA':
-            act_type = None
-        if mode == 'CNAC':  # Residual path: |-CNAC-|
-            act_type = None
-            norm_type = None
-        conv1 = conv_block(mid_nc, out_nc, kernel_size, stride, dilation, groups, bias, pad_type, \
-            norm_type, act_type, mode)
-        # if in_nc != out_nc:
-        #     self.project = conv_block(in_nc, out_nc, 1, stride, dilation, 1, bias, pad_type, \
-        #         None, None)
-        #     print('Need a projecter in ResNetBlock.')
-        # else:
-        #     self.project = lambda x:x
-        self.res = sequential(conv0, conv1)
-        self.res_scale = res_scale
-
-    def forward(self, x):
-        res = self.res(x).mul(self.res_scale)
-        return x + res
-
 
 class ResidualDenseBlock_5C(nn.Module):
     """
