@@ -11,6 +11,11 @@ import torch
 import rrdbnet
 
 class Upscaler(object):
+    def upscale(self, input_image):
+        # nop
+        return input_image
+
+class RRDBNetUpscaler(Upscaler):
     def __init__(self, model_data, device):
         try:
             # get largest model index from keys like "model.X.weight"
@@ -46,7 +51,7 @@ class Upscaler(object):
 
         return output_image
 
-class TiledUpscaler(object):
+class TiledUpscaler(Upscaler):
     def __init__(self, upscaler, tile_size, tile_padding):
         self.upscaler = upscaler
         self.tile_size = tile_size
@@ -241,7 +246,7 @@ class ESRGAN(object):
         # apply all models from the list
         for model in models:
             print("Applying model '%s'" % model.name())
-            upscaler = Upscaler(model.get(), self.torch)
+            upscaler = RRDBNetUpscaler(model.get(), self.torch)
             output_image = self._process_image(output_image, upscaler)
 
         # write output
