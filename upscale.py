@@ -11,18 +11,7 @@ class Upscaler(object):
 
 class RRDBNetUpscaler(Upscaler):
     def __init__(self, model_data, device):
-        try:
-            # get largest model index from keys like "model.X.weight"
-            max_index = max([int(n.split(".")[1]) for n in model_data.keys()])
-        except:
-            # invalid model dict format?
-            raise RuntimeError("Unable to determine scale factor for model")
-
-        # calculate scale factor from index
-        # (1x=4, 2x=7, 4x=10, 8x=13, etc.)
-        scale_factor = pow(2, (max_index - 4) // 3)
-
-        model = rrdbnet.RRDB_Net(3, 3, 64, 23, upscale=scale_factor)
+        model = rrdbnet.RRDBNet(3, 3, 64, 23)
         model.load_state_dict(model_data, strict=True)
         model.eval()
 
@@ -31,7 +20,7 @@ class RRDBNetUpscaler(Upscaler):
 
         self.model = model.to(device)
         self.device = device
-        self.scale_factor = scale_factor
+        self.scale_factor = 2 ** model.n_upscale
 
     def upscale(self, input_image):
         input_image = input_image * 1.0 / 255
