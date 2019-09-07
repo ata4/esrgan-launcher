@@ -10,6 +10,3 @@ services:
     <<: *default
     runtime: nvidia
     entrypoint: python3 -u main.py --device cuda
-  tmp:
-    <<: *default
-    entrypoint: python3 -u net_interp.py
