@@ -2,6 +2,8 @@ version: "2.3"
 services:
   main-cpu: &default
     image: esrgan
+    build:
+      context: .
     volumes:
       - '.:/app/esrgan'
     working_dir: /app/esrgan
