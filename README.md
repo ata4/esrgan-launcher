@@ -30,10 +30,10 @@ main.py input output --model models
 
 ---
 
-Upscale image `teapot.png` in folder `input` and put the result in `output` using all .pth files from folder `models` starting with `4x`.
+Upscale image `teapot.png` in folder `input` and put the result in `output` using all .pth files from folder `models` starting with `4x`. Keep in mind that quotes are required for the path for wildcards to work!
 
 ```
-main.py input/teapot.png output --model models/4x*.pth
+main.py input/teapot.png output --model "models/4x*.pth"
 ```
 
 ---
