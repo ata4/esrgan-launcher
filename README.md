@@ -20,6 +20,10 @@ Note that the weights don't have to add up to 100, since the model alpha is calc
 
 For a list of freely available models to download, take a look at the [upscale.wiki model database](https://upscale.wiki/wiki/Model_Database).
 
+## Tiling
+
+Since upscaling images can take a lot of VRAM, the script splits large input images into smaller tiles, upscales those one by one and puts them back together in memory by default. Some overlapping is applied to compensate artifacts near the border of the tiles. The result still varies slightly compared to upscaling the image in one go, but it should be barely noticeable. Still, it's recommended to experiment with the ``--tilesize`` argument to find the maximum value that your GPU supports to reduce its impact on the output.
+
 ## Command line examples
 
 Upscale all images in folder `input` and put the result in `output` using all files from folder `models`.
