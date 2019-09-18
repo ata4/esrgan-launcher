@@ -83,7 +83,7 @@ class ESRGAN(object):
         # apply all models from the list
         for model in models:
             print("Applying model '%s'" % model.name())
-            upscaler = upscale.RRDBNetUpscaler(model.get(), self.torch)
+            upscaler = upscale.RRDBNetUpscaler(model, self.torch)
             output_image = self._process_image(output_image, upscaler)
 
         # write output

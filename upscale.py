@@ -10,17 +10,19 @@ class Upscaler(object):
         return input_image
 
 class RRDBNetUpscaler(Upscaler):
-    def __init__(self, model_data, device):
-        model = rrdbnet.RRDBNet(3, 3, 64, 23)
-        model.load_state_dict(model_data, strict=True)
-        model.eval()
+    def __init__(self, model, device):
+        net, scale = model.load()
 
-        for _, v in model.named_parameters():
+        model_net = rrdbnet.RRDBNet(3, 3, 64, 23)
+        model_net.load_state_dict(net, scale, strict=True)
+        model_net.eval()
+
+        for _, v in model_net.named_parameters():
             v.requires_grad = False
 
-        self.model = model.to(device)
+        self.model = model_net.to(device)
         self.device = device
-        self.scale_factor = 2 ** model.n_upscale
+        self.scale_factor = 2 ** scale
 
     def upscale(self, input_image):
         input_image = input_image * 1.0 / 255
