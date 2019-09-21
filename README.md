@@ -1,8 +1,8 @@
-This script is based on the [original ESRGAN repository](https://github.com/xinntao/ESRGAN) for upscaling images. It's primarily meant to replace the very rudimentary test.py with a more powerful and intuitive command line interface and close the gap between the two ESRGAN model architectures.
+This script is a ESRGAN implementation based on the [original ESRGAN repository](https://github.com/xinntao/ESRGAN) for upscaling images. It's primarily meant to replace the very rudimentary test.py of the original repo with a more powerful and intuitive command line interface and close the gap between the two ESRGAN model architectures.
 
 ## Models
 
-The script differentiates between two types of models: primary models and filter models. Filter models also exist in two variants: pre-filter and post-filter. Filter models  are typically 1x scale models, but they don't necessarily have to.
+The script differentiates between two types of models: primary models (``--model``) and filter models. Filter models also exist in two variants: pre-filter (``--pre-filter``) and post-filter (``--post-filter``). Filter models are typically 1x scale models, but they don't necessarily have to.
 
 The file processing works like this: for each primary model, go through each input file, then apply all pre-filter models, then the current primary model, then all post-filter models and write the result to the output directory. Each primary model will have its own output sub-directory, which is named by the chain of models being used.
 
@@ -16,13 +16,13 @@ Models can be interpolated on the fly by providing a list of path/weight pairs, 
 
 The path separator depends on the platform. It's ":" on Unix/Linux/MacOS and ";" on Windows.
 
-Note that the weights don't have to add up to 100, since the model alpha is calculated by the weight divided by the total weight. So in the example above, it's perfectly fine to use 1/1/2 instead.
+Note that the weights don't have to add up to 100, since the model alpha is calculated by the weight divided by the total weight. So in the example above, it's perfectly fine to use 1/1/2 instead. Also keep in mind that not all models can be interpolated without issues.
 
 For a list of freely available models to download, take a look at the [upscale.wiki model database](https://upscale.wiki/wiki/Model_Database).
 
 ## Tiling
 
-Since upscaling images can take a lot of VRAM, the script splits large input images into smaller tiles, upscales those one by one and puts them back together in memory by default. Some overlapping is applied to compensate artifacts near the border of the tiles. The result still varies slightly compared to upscaling the image in one go, but it should be barely noticeable. Still, it's recommended to experiment with the ``--tilesize`` argument to find the maximum value that your GPU supports to reduce its impact on the output.
+Since upscaling images can take a lot of (V)RAM, the script splits large input images into smaller tiles, upscales those one by one and puts them back together in memory by default. Some overlapping is applied to compensate artifacts near the border of the tiles. The result still varies slightly compared to upscaling the image in one go, but it should be barely noticeable. Still, it's recommended to experiment with the ``--tilesize`` argument to find the maximum value that your GPU supports to reduce its impact on the output.
 
 ## Command line examples
 
