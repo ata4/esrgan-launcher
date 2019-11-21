@@ -11,4 +11,3 @@ services:
   main:
     <<: *default
     runtime: nvidia
-    entrypoint: python3 -u main.py --device cuda
