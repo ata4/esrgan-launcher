@@ -16,6 +16,7 @@ class ESRGAN(object):
         self.tile_size = 512
         self.tile_padding = 0.125
         self.per_channel = False
+        self.no_alpha = False
 
         self.models_upscale = []
         self.models_prefilter = []
@@ -50,7 +51,10 @@ class ESRGAN(object):
         else:
             # extract alpha channel if present
             if input_image.shape[2] == 4:
-                input_alpha = input_image[:, :, 3]
+                if self.no_alpha:
+                    input_alpha = None
+                else:
+                    input_alpha = input_image[:, :, 3]
                 input_image = input_image[:, :, 0:3]
             else:
                 input_alpha = None
@@ -147,6 +151,7 @@ class ESRGAN(object):
         parser.add_argument("--postfilter", action="append", metavar="FILE", help="path to model file applied after upscaling (can be used repeatedly)")
         parser.add_argument("--tilesize", type=int, metavar="N", default=self.tile_size, help="width/height of tiles in pixels (0 = don't use tiles)")
         parser.add_argument("--perchannel", action="store_true", help="process each channel individually as grayscale image")
+        parser.add_argument("--noalpha", action="store_true", help="ignore alpha channels from input and output RGB only")
 
         args = parser.parse_args()
 
@@ -154,6 +159,7 @@ class ESRGAN(object):
         self.torch = torch.device(self.device)
         self.tile_size = args.tilesize
         self.per_channel = args.perchannel
+        self.no_alpha = args.noalpha
 
         self.models_upscale = self._parse_model(args.model)
         self.models_prefilter = self._parse_model(args.prefilter)
