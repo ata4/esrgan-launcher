@@ -39,6 +39,7 @@ class RRDBNetUpscaler(Upscaler):
 class TiledUpscaler(Upscaler):
     def __init__(self, upscaler, tile_size, tile_padding):
         self.upscaler = upscaler
+        self.scale_factor = upscaler.scale_factor
         self.tile_size = tile_size
         self.tile_padding = tile_padding
 
