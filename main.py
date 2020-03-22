@@ -165,6 +165,10 @@ class ESRGAN(object):
         self.models_prefilter = self._parse_model(args.prefilter)
         self.models_postfilter = self._parse_model(args.postfilter)
 
+        if not any((self.models_upscale, self.models_prefilter, self.models_postfilter)):
+            print("No models selected or found!")
+            return 1
+
         for model_upscale in self.models_upscale:
             models = self.models_prefilter + [model_upscale] + self.models_postfilter
             model_name = "_".join([model.name() for model in models])
