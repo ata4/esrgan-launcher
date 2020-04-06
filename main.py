@@ -139,7 +139,7 @@ class ESRGAN(object):
 
         return models
 
-    def main(self):
+    def main(self, argv):
         parser = argparse.ArgumentParser(description="ESRGAN image upscaler")
 
         parser.add_argument("input", help="Path to input folder")
@@ -153,7 +153,7 @@ class ESRGAN(object):
         parser.add_argument("--perchannel", action="store_true", help="process each channel individually as grayscale image")
         parser.add_argument("--noalpha", action="store_true", help="ignore alpha channels from input and output RGB only")
 
-        args = parser.parse_args()
+        args = parser.parse_args(args=argv[1:])
 
         self.device = args.device
         self.torch = torch.device(self.device)
@@ -200,4 +200,4 @@ class ESRGAN(object):
                     self._process_file(input_path, output_path, models)
 
 if __name__ == "__main__":
-    exit(ESRGAN().main())
+    exit(ESRGAN().main(sys.argv))
