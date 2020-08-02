@@ -17,6 +17,8 @@ class RRDBNetUpscaler(Upscaler):
         model_net.load_state_dict(net, scale, strict=True)
         model_net.eval()
 
+        del net
+
         for _, v in model_net.named_parameters():
             v.requires_grad = False
 
