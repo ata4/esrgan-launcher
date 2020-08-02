@@ -27,7 +27,7 @@ class RRDBNetUpscaler(Upscaler):
         self.scale_factor = 2 ** scale
 
     def upscale(self, input_image):
-        input_image = input_image * 1.0 / 255
+        input_image = input_image * 1.0 / np.iinfo(input_image.dtype).max
         input_image = np.transpose(input_image[:, :, [2, 1, 0]], (2, 0, 1))
         input_image = torch.from_numpy(input_image).float()
         input_image = input_image.unsqueeze(0).to(self.device)
