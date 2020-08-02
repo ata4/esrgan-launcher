@@ -30,7 +30,7 @@ class RRDBNetUpscaler(Upscaler):
         input_image = torch.from_numpy(input_image).float()
         input_image = input_image.unsqueeze(0).to(self.device)
 
-        output_image = self.model(input_image).data.squeeze().float().cpu().clamp_(0, 1).numpy()
+        output_image = self.model(input_image).data.squeeze().float().cpu().clamp(0, 1).numpy()
         output_image = np.transpose(output_image[[2, 1, 0], :, :], (1, 2, 0))
         output_image = (output_image * 255.0).round()
 
