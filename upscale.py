@@ -4,6 +4,8 @@ import numpy as np
 import torch
 import rrdbnet
 
+import cv2
+
 class Upscaler(object):
     def upscale(self, input_image):
         # nop
@@ -34,16 +36,17 @@ class RRDBNetUpscaler(Upscaler):
 
         output_image = self.model(input_image).data.squeeze().float().cpu().clamp(0, 1).numpy()
         output_image = np.transpose(output_image[[2, 1, 0], :, :], (1, 2, 0))
-        output_image = (output_image * 255.0).round()
+        output_image = (output_image * 255.0).round().astype(np.uint8)
 
         return output_image
 
 class TiledUpscaler(Upscaler):
-    def __init__(self, upscaler, tile_size, tile_padding):
+    def __init__(self, upscaler, tile_size, tile_padding, tile_callback=None):
         self.upscaler = upscaler
         self.scale_factor = upscaler.scale_factor
         self.tile_size = tile_size
         self.tile_padding = tile_padding
+        self.tile_callback = tile_callback
 
     def upscale(self, input_image):
         scale_factor = self.upscaler.scale_factor
@@ -94,6 +97,9 @@ class TiledUpscaler(Upscaler):
 
                 # upscale tile
                 output_tile = self.upscaler.upscale(input_tile)
+
+                if self.tile_callback:
+                    self.tile_callback(output_tile, x, y)
 
                 # output tile area on total image
                 output_start_x = input_start_x * scale_factor

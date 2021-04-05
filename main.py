@@ -9,6 +9,9 @@ import torch
 import model
 import upscale
 
+import threading
+from collections import deque
+
 class ESRGAN(object):
     def __init__(self):
         self.device = ("cpu", "cuda")[torch.cuda.is_available()]
@@ -24,7 +27,7 @@ class ESRGAN(object):
 
     def _process_image(self, input_image, upscaler):
         if self.tile_size > 0:
-            upscaler = upscale.TiledUpscaler(upscaler, self.tile_size, self.tile_padding)
+            upscaler = upscale.TiledUpscaler(upscaler, self.tile_size, self.tile_padding, self.tile_callback)
 
         if len(input_image.shape) == 2:
             # only one channel
@@ -139,6 +142,16 @@ class ESRGAN(object):
 
         return models
 
+    def main_image(self):
+        while True:
+            if self.image_queue:
+                tile_image = self.image_queue.pop()
+                cv2.imshow("tile", tile_image)
+            cv2.waitKey(10)
+
+    def tile_callback(self, output_tile, x, y):
+        self.image_queue.append(output_tile)
+
     def main(self, argv):
         parser = argparse.ArgumentParser(description="ESRGAN image upscaler")
 
@@ -164,6 +177,11 @@ class ESRGAN(object):
         self.models_upscale = self._parse_model(args.model)
         self.models_prefilter = self._parse_model(args.prefilter)
         self.models_postfilter = self._parse_model(args.postfilter)
+
+        self.image_queue = deque()
+
+        self.image_thread = threading.Thread(target=self.main_image, daemon=True)
+        self.image_thread.start()
 
         if not any((self.models_upscale, self.models_prefilter, self.models_postfilter)):
             print("No models selected or found!")
