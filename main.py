@@ -8,6 +8,7 @@ import numpy as np
 import torch
 import model
 import upscale
+from PIL import Image
 
 import threading
 from collections import deque
@@ -76,13 +77,24 @@ class ESRGAN(object):
 
     def _process_file(self, input_path, output_path, models):
         input_name = os.path.basename(input_path)
+
         print("Processing", input_name)
 
         # read input
+        use_pillow = False
+        has_alpha = False
         input_image = cv2.imread(input_path, cv2.IMREAD_UNCHANGED)
         if input_image is None:
-            print("Unsupported image format:", input_path)
-            return
+            # OpenCV can't read that, try Pillow
+            input_image = Image.open(input_path)
+            use_pillow = True
+            has_alpha = input_image.mode == "RGBA"
+            
+            input_image = np.array(input_image)
+            if has_alpha:
+                input_image = cv2.cvtColor(input_image, cv2.COLOR_BGRA2RGBA)
+            else:
+                input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
 
         # start with an unmodified image
         output_image = input_image
@@ -94,7 +106,15 @@ class ESRGAN(object):
             output_image = self._process_image(output_image, upscaler)
 
         # write output
-        cv2.imwrite(output_path, output_image)
+        if use_pillow:
+            if has_alpha:
+                output_image = cv2.cvtColor(output_image, cv2.COLOR_RGBA2BGRA)
+            else:
+                output_image = cv2.cvtColor(output_image, cv2.COLOR_RGB2BGR)
+            output_image = Image.fromarray(output_image)
+            output_image.save(output_path)
+        else:
+            cv2.imwrite(output_path, output_image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
 
     def _parse_model(self, model_args):
         models = []
@@ -200,10 +220,9 @@ class ESRGAN(object):
                 for dirpath, _, filenames in os.walk(args.input):
                     for filename in filenames:
                         input_path = os.path.join(dirpath, filename)
-
                         input_path_rel = os.path.relpath(input_path, args.input)
-                        output_path_rel = os.path.splitext(input_path_rel)[0] + ".png"
-                        output_path = os.path.join(output_dir, output_path_rel)
+  
+                        output_path = os.path.join(output_dir, input_path_rel)
                         os.makedirs(os.path.dirname(output_path), exist_ok=True)
                         self._process_file(input_path, output_path, models)
 
@@ -213,8 +232,7 @@ class ESRGAN(object):
                         continue
 
                     input_name = os.path.basename(input_path)
-                    output_name = os.path.splitext(input_name)[0] + ".png"
-                    output_path = os.path.join(output_dir, output_name)
+                    output_path = os.path.join(output_dir, input_name)
                     self._process_file(input_path, output_path, models)
 
 if __name__ == "__main__":
