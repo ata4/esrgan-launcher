@@ -18,7 +18,7 @@ class ESRGAN(object):
         self.device = ("cpu", "cuda")[torch.cuda.is_available()]
         self.torch = None
         self.tile_size = 1024
-        self.tile_padding = 0.125
+        self.tile_padding = 0.05
         self.per_channel = False
         self.no_alpha = False
         self.skip_alpha = False
