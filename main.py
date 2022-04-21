@@ -21,6 +21,7 @@ class ESRGAN(object):
         self.tile_padding = 0.125
         self.per_channel = False
         self.no_alpha = False
+        self.skip_alpha = False
 
         self.models_upscale = []
         self.models_prefilter = []
@@ -53,12 +54,9 @@ class ESRGAN(object):
                 output_image[:, :, c] = output_rgb[:, :, 0]
 
         else:
-            # extract alpha channel if present
-            if input_image.shape[2] == 4:
-                if self.no_alpha:
-                    input_alpha = None
-                else:
-                    input_alpha = input_image[:, :, 3]
+            # extract alpha channel if present and enabled
+            if not self.no_alpha and input_image.shape[2] == 4:
+                input_alpha = input_image[:, :, 3]
                 input_image = input_image[:, :, 0:3]
             else:
                 input_alpha = None
@@ -68,15 +66,30 @@ class ESRGAN(object):
             # upscale alpha channel separately
             if input_alpha is not None:
                 print(" Alpha")
+
+                if self.skip_alpha:
+                    # pass-through if filtering with 1x or upscale using default OpenCV upscaler
+                    if upscaler.scale_factor > 1:
+                        alpha_upscaler = upscale.OpenCVUpscaler(upscaler.scale_factor)
+                    else:
+                        alpha_upscaler = upscale.Upscaler()
+                else:
+                    # use same upscaler for color and alpha
+                    alpha_upscaler = upscaler
+
                 output_image = cv2.cvtColor(output_image, cv2.COLOR_RGB2RGBA)
                 input_alpha_rgb = cv2.cvtColor(input_alpha, cv2.COLOR_GRAY2RGB)
-                output_alpha_rgb = upscaler.upscale(input_alpha_rgb)
+                output_alpha_rgb = alpha_upscaler.upscale(input_alpha_rgb)
                 output_image[:, :, 3] = output_alpha_rgb[:, :, 0]
 
         return output_image
 
     def _process_file(self, input_path, output_path, models):
         input_name = os.path.basename(input_path)
+
+        if os.path.exists(output_path):
+            print("Skipped (output exists)", input_name)
+            return
 
         print("Processing", input_name)
 
@@ -184,7 +197,8 @@ class ESRGAN(object):
         parser.add_argument("--postfilter", action="append", metavar="FILE", help="path to model file applied after upscaling (can be used repeatedly)")
         parser.add_argument("--tilesize", type=int, metavar="N", default=self.tile_size, help="width/height of tiles in pixels (0 = don't use tiles)")
         parser.add_argument("--perchannel", action="store_true", help="process each channel individually as grayscale image")
-        parser.add_argument("--noalpha", action="store_true", help="ignore alpha channels from input and output RGB only")
+        parser.add_argument("--noalpha", action="store_true", help="drop alpha channels from input entirely")
+        parser.add_argument("--skipalpha", action="store_true", help="don't touch alpha channels, use bicubic upscaling only if needed")
 
         args = parser.parse_args(args=argv[1:])
 
@@ -193,6 +207,7 @@ class ESRGAN(object):
         self.tile_size = args.tilesize
         self.per_channel = args.perchannel
         self.no_alpha = args.noalpha
+        self.skip_alpha = args.skipalpha
 
         self.models_upscale = self._parse_model(args.model)
         self.models_prefilter = self._parse_model(args.prefilter)
