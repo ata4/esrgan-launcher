@@ -11,6 +11,16 @@ class Upscaler(object):
         # nop
         return input_image
 
+class OpenCVUpscaler(object):
+    def __init__(self, scale_factor, interp = cv2.INTER_CUBIC):
+        self.interp = interp
+        self.scale_factor = scale_factor
+
+    def upscale(self, input_image):
+        output_width = input_image.shape[1] * self.scale_factor
+        output_height = input_image.shape[0] * self.scale_factor
+        return cv2.resize(input_image, (output_width, output_height), 0, 0, interpolation=self.interp)
+
 class RRDBNetUpscaler(Upscaler):
     def __init__(self, model, device):
         net, scale = model.load()
@@ -28,7 +38,14 @@ class RRDBNetUpscaler(Upscaler):
         self.device = device
         self.scale_factor = 2 ** scale
 
+        self.trivial_upscaler = OpenCVUpscaler(self.scale_factor, interp=cv2.INTER_LINEAR)
+
     def upscale(self, input_image):
+        # don't waste time upscaling trivial images with just one color
+        num_unique_colors = len(np.unique(input_image.reshape(-1, input_image.shape[2]), axis=0))
+        if num_unique_colors == 1:
+            return self.trivial_upscaler.upscale(input_image)
+
         input_image = input_image * 1.0 / np.iinfo(input_image.dtype).max
         input_image = np.transpose(input_image[:, :, [2, 1, 0]], (2, 0, 1))
         input_image = torch.from_numpy(input_image).float()
