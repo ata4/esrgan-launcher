@@ -183,7 +183,8 @@ class ESRGAN(object):
             cv2.waitKey(10)
 
     def tile_callback(self, output_tile, x, y):
-        self.image_queue.append(output_tile)
+        if self.image_queue is not None:
+            self.image_queue.append(output_tile)
 
     def main(self, argv):
         parser = argparse.ArgumentParser(description="ESRGAN image upscaler")
@@ -199,6 +200,7 @@ class ESRGAN(object):
         parser.add_argument("--perchannel", action="store_true", help="process each channel individually as grayscale image")
         parser.add_argument("--noalpha", action="store_true", help="drop alpha channels from input entirely")
         parser.add_argument("--skipalpha", action="store_true", help="don't touch alpha channels, use bicubic upscaling only if needed")
+        parser.add_argument("--preview", action="store_true", help="show preview window of the current image/tile being processed")
 
         args = parser.parse_args(args=argv[1:])
 
@@ -208,15 +210,19 @@ class ESRGAN(object):
         self.per_channel = args.perchannel
         self.no_alpha = args.noalpha
         self.skip_alpha = args.skipalpha
+        self.preview = args.preview
 
         self.models_upscale = self._parse_model(args.model)
         self.models_prefilter = self._parse_model(args.prefilter)
         self.models_postfilter = self._parse_model(args.postfilter)
 
-        self.image_queue = deque()
+        if self.preview:
+            self.image_queue = deque()
 
-        self.image_thread = threading.Thread(target=self.main_image, daemon=True)
-        self.image_thread.start()
+            self.image_thread = threading.Thread(target=self.main_image, daemon=True)
+            self.image_thread.start()
+        else:
+            self.image_queue = None
 
         if not any((self.models_upscale, self.models_prefilter, self.models_postfilter)):
             print("No models selected or found!")
